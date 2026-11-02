@@ -51,13 +51,18 @@ add_address()
                     fi
 
                     echo "address will be update with"
-                    echo "phone : $nphone"
-                    echo "email : $nmail"
-                    
-                    sed -i "s/$cline/$nline/" ./address_book.txt
-                    echo "successfully update ${fullname}'s address"
+                    echo "phone : ${nphone:-$cphone}"
+                    echo "email : ${nmail:-$cemail}"
+                    echo "enter y to confirm, other will cancel and back to main menu"
+                    read confirm
+
+                    if [ "$confirm" = y ]; then
+                        sed -i "s/$cline/$nline/" ./address_book.txt
+                        echo "successfully update ${fullname}'s address"
+                    fi
 
                     break
+
                 elif [ $update = "n" ]; then
                     echo "${fullname}'s address not change."
                     break
