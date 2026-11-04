@@ -15,7 +15,7 @@ do
 
     case $INPUT in
         s)
-            echo search
+            search_address
             ;;
         a)
             add_address

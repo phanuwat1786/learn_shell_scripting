@@ -53,7 +53,7 @@ add_address()
                     echo "address will be update with"
                     echo "phone : ${nphone:-$cphone}"
                     echo "email : ${nmail:-$cemail}"
-                    echo "enter y to confirm, other will cancel and back to main menu"
+                    echo "enter y to confirm, other will cancel and back to main menu."
                     read confirm
 
                     if [ "$confirm" = y ]; then
@@ -81,4 +81,41 @@ add_address()
         
         echo "user ${fullname} added successfully."
     fi
+}
+
+
+show_address(){
+    echo "    full name : $1"
+    echo "    phone number : $2"
+    echo "    email : $3"
+}
+
+search_address()
+{
+    while :
+    do
+        echo -n "enter keyword to search for : "
+        read search_keyword 
+        if [ -n "$search_keyword" ]; then
+            matched_address=`grep "$search_keyword" ./address_book.txt`
+            if [ -n "$matched_address" ]; then
+                echo "found address(es) that contian \"$search_keyword\""
+                echo " "
+                old_ifs=$IFS
+                echo "$matched_address" | while read matched_line
+                do
+                    IFS=":"
+                    show_address $matched_line
+                    IFS=$old_ifs
+                    echo " "
+                done 
+                break
+            else
+                echo "No address matched \"$search_keyword\""
+                break
+            fi
+        else
+            echo "search keyword cannot be blank."
+        fi
+    done
 }
