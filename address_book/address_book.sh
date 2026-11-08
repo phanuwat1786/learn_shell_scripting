@@ -21,7 +21,7 @@ do
             add_address
             ;;
         r)
-            echo remove
+            remove_address
             ;;
         e)
             echo edit

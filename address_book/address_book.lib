@@ -4,9 +4,9 @@ add_address()
 {
     echo "Adding new address"
     echo -n "Enter Name : "
-    read name
+    read -r name
     echo -n "Enter Surname : "
-    read surname
+    read -r surname
 
     fullname=`echo "${name} ${surname}"`
 
@@ -17,10 +17,10 @@ add_address()
         if [ $grep_return_code -eq "1" ]; then
             
             echo -n "Enter Phone number (can be blank) : "
-            read phone
+            read -r phone
             echo -n "Enter email (can be blank) : "
-            read email
-            echo "${fullname}:${phone:-undefined}:${email:-undefined}" &>> ./address_book.txt
+            read -r email
+            echo "${fullname}:${phone}:${email}" &>> ./address_book.txt
             
             echo "user ${fullname} added successfully."
         
@@ -30,7 +30,7 @@ add_address()
             while :
             do
                 echo -n "want to update ? (y/n) : "
-                read update
+                read -r update
                 if [ $update = "y" ]; then
                 
                     cline=`grep "${fullname}:" ./address_book.txt`
@@ -39,13 +39,13 @@ add_address()
                     cemail=`echo $cline | cut -d: -f3`
                     echo "current email is : $cemail"
                     echo -n "enter new email (left blank to skip) : "
-                    read nmail
+                    read -r nmail
                     if [ -n "$nmail" ]; then
                         nline=`echo "$nline" | sed s/"$cemail"/"$nmail"/g`
                     fi 
                     echo "current phone number is $cphone"
                     echo -n "enter new phone (left blank to skip) : "
-                    read nphone
+                    read -r nphone
                     if [ -n "$nphone" ]; then
                         nline=`echo "$nline" | sed s/"$cphone"/"$nphone"/g`
                     fi
@@ -54,7 +54,7 @@ add_address()
                     echo "phone : ${nphone:-$cphone}"
                     echo "email : ${nmail:-$cemail}"
                     echo "enter y to confirm, other will cancel and back to main menu."
-                    read confirm
+                    read -r confirm
 
                     if [ "$confirm" = y ]; then
                         sed -i "s/$cline/$nline/" ./address_book.txt
@@ -74,9 +74,9 @@ add_address()
 
     else
         echo -n "Enter Phone number (can be blank) : "
-        read phone
+        read -r phone
         echo -n "Enter email (can be blank) : "
-        read email
+        read -r email
         echo "${fullname}:${phone:-undefined}:${email:-undefined}" &>> ./address_book.txt
         
         echo "user ${fullname} added successfully."
@@ -84,10 +84,11 @@ add_address()
 }
 
 
-show_address(){
-    echo "    full name : $1"
-    echo "    phone number : $2"
-    echo "    email : $3"
+show_address()
+{
+    echo "    full name : \"$1\""
+    echo "    phone number : \"$2\""
+    echo "    email : \"$3\""
 }
 
 search_address()
@@ -95,11 +96,11 @@ search_address()
     while :
     do
         echo -n "enter keyword to search for : "
-        read search_keyword 
+        read -r search_keyword 
         if [ -n "$search_keyword" ]; then
-            matched_address=`grep "$search_keyword" ./address_book.txt`
+            matched_address=`grep -F "$search_keyword" ./address_book.txt`
             if [ -n "$matched_address" ]; then
-                echo "found address(es) that contian \"$search_keyword\""
+                echo "found address that contian \"$search_keyword\""
                 echo " "
                 old_ifs=$IFS
                 echo "$matched_address" | while read matched_line
@@ -118,4 +119,64 @@ search_address()
             echo "search keyword cannot be blank."
         fi
     done
+}
+
+remove_address()
+{
+    matched_line=2
+    while [ "$matched_line" -gt "1" ]
+    do
+
+        while [ -z "$search_value" ]
+        do
+            echo -n "enter value to search for address : "
+            read search_value
+            [ -z "$search_value" ] && echo "seach value cannot be blank"
+        done
+        matched_address=`grep -F "$search_value" ./address_book.txt`
+        if [ -n "$matched_address" ]; then
+            matched_line=`echo "$matched_address" | wc | awk '{ print $1 }'`
+            echo "found $matched_line address that contian \"$search_value\""
+            echo " "
+            old_ifs=$IFS
+            echo "$matched_address" | while read matched_line
+            do
+                IFS=":"
+                show_address $matched_line
+                IFS=$old_ifs
+                echo " "
+            done 
+            if [ "$matched_line" -gt "1" ]; then
+                echo "Your result is matched more than one address."
+                echo -n "You need to change your search value to narrow result doesn to one. Do you want to continue ? (Y/n) : " 
+
+                read confirm
+                if [ -z "$confirm" ] || [ "$confirm" = "y" ] || [ "$confirm" = "Y" ]; then
+                   echo ""
+                else
+                   break
+                fi
+            fi
+        else
+            echo -n "Your search value doesn't match any address. Do you want to search again ? (y/N) : "
+            read confirm
+            if [ -z "$confirm" ] || [ "$confirm" = "y" ] || [ "$confirm" = "Y" ]; then
+                echo ""
+            else
+                break
+            fi
+        fi
+    done
+
+    if [ "$matched_line" -eq "1" ]; then
+        echo -n "This address will be deleted. Do you want to continue ? (y/N) : "
+        read confirm
+        if [ "$confirm" = "y" ] || [ "$confirm" = "Y" ]; then
+            sed -i "/$matched_address/d" ./address_book.txt
+            echo "deletd successfully"
+        else
+            break
+        fi
+    fi
+
 }
