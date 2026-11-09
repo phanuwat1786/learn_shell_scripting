@@ -8,7 +8,7 @@ add_address()
     echo -n "Enter Surname : "
     read -r surname
 
-    fullname=`echo "${name} ${surname}"`
+    fullname=`echo "${name}:${surname}"`
 
     if [ -f ./address_book.txt ]; then
         grep -q "$fullname:" ./address_book.txt
@@ -22,16 +22,16 @@ add_address()
             read -r email
             echo "${fullname}:${phone}:${email}" &>> ./address_book.txt
             
-            echo "user ${fullname} added successfully."
+            echo "user \"${name} ${surname}\" added successfully."
         
         else
             echo "${fullname}'s address already exist."
             update=""
             while :
             do
-                echo -n "want to update ? (y/n) : "
+                echo -n "want to update ? (y/N) : "
                 read -r update
-                if [ $update = "y" ]; then
+                if [ "$update" = "y" ]; then
                 
                     cline=`grep "${fullname}:" ./address_book.txt`
                     nline="$cline"
@@ -58,13 +58,13 @@ add_address()
 
                     if [ "$confirm" = y ]; then
                         sed -i "s/$cline/$nline/" ./address_book.txt
-                        echo "successfully update ${fullname}'s address"
+                        echo "successfully update \"${name} ${surname}\"'s address"
                     fi
 
                     break
 
-                elif [ $update = "n" ]; then
-                    echo "${fullname}'s address not change."
+                elif [ "$update" = "n" ] || [ -z "$update" ]; then
+                    echo "\"${name} ${surname}\"'s address not change."
                     break
                 else
                     echo "only y or n"
@@ -77,18 +77,19 @@ add_address()
         read -r phone
         echo -n "Enter email (can be blank) : "
         read -r email
-        echo "${fullname}:${phone:-undefined}:${email:-undefined}" &>> ./address_book.txt
+        echo "${fullname}:${phone}:${email}" &>> ./address_book.txt
         
-        echo "user ${fullname} added successfully."
+        echo "user ${name} ${surname} added successfully."
     fi
 }
 
 
 show_address()
 {
-    echo "    full name : \"$1\""
-    echo "    phone number : \"$2\""
-    echo "    email : \"$3\""
+    echo "    name : \"$1\""
+    echo "    surname : \"$2\""
+    echo "    phone number : \"$3\""
+    echo "    email : \"$4\""
 }
 
 search_address()
@@ -126,7 +127,71 @@ remove_address()
     matched_line=2
     while [ "$matched_line" -gt "1" ]
     do
+        search_value=
+        while [ -z "$search_value" ]
+        do
+            echo -n "enter value to search for address : "
+            read search_value
+            [ -z "$search_value" ] && echo "seach value cannot be blank"
+        done
+        matched_address=`grep -F "$search_value" ./address_book.txt`
+        if [ -n "$matched_address" ]; then
+            matched_line=`echo "$matched_address" | wc | awk '{ print $1 }'`
+            echo "found $matched_line address that contian \"$search_value\""
+            echo " "
+            old_ifs=$IFS
+            echo "$matched_address" | while read matched_line
+            do
+                IFS=":"
+                show_address $matched_line
+                IFS=$old_ifs
+                echo " "
+            done 
+            if [ "$matched_line" -gt "1" ]; then
+                echo "Your result is matched more than one address."
+                echo -n "You need to change your search value to narrow result doesn to one. Do you want to continue ? (Y/n) : " 
 
+                read confirm
+                if [ -z "$confirm" ] || [ "$confirm" = "y" ] || [ "$confirm" = "Y" ]; then
+                   echo ""
+                else
+                   break
+                fi
+            fi
+        else
+            echo -n "Your search value doesn't match any address. Do you want to search again ? (y/N) : "
+            read confirm
+            if [ -z "$confirm" ] || [ "$confirm" = "y" ] || [ "$confirm" = "Y" ]; then
+                echo ""
+            else
+                echo "Remove canceled."
+                break
+            fi
+        fi
+    done
+
+    if [ "$matched_line" -eq "1" ]; then
+        echo -n "This address will be deleted. Do you want to continue ? (y/N) : "
+        read confirm
+        if [ "$confirm" = "y" ] || [ "$confirm" = "Y" ]; then
+            sed -i "/$matched_address/d" ./address_book.txt
+            echo "deletd successfully"
+        else
+            echo "Remove canceled."
+            break
+        fi
+    fi
+
+}
+
+
+edit_address()
+{
+
+    matched_line=2
+    while [ "$matched_line" -gt "1" ]
+    do
+        search_value=
         while [ -z "$search_value" ]
         do
             echo -n "enter value to search for address : "
@@ -169,14 +234,40 @@ remove_address()
     done
 
     if [ "$matched_line" -eq "1" ]; then
-        echo -n "This address will be deleted. Do you want to continue ? (y/N) : "
+        echo -n "Do you want to edit this address ? (y/N) : "
         read confirm
         if [ "$confirm" = "y" ] || [ "$confirm" = "Y" ]; then
-            sed -i "/$matched_address/d" ./address_book.txt
-            echo "deletd successfully"
-        else
-            break
-        fi
-    fi
 
+            oname=`echo "$matched_address" | cut -d: -f1`
+            osurname=`echo "$matched_address" | cut -d: -f2`
+            ophone=`echo "$matched_address" | cut -d: -f3`
+            oemail=`echo "$matched_address" | cut -d: -f4`
+
+            echo -n "enter new name (${oname}) : "
+            read nname
+            echo -n "enter new surname (${osurname}) : "
+            read nsurname
+            echo -n "enter new phone (${ophone}) : "
+            read nphone
+            echo -n "enter new email (${oemail}) : "
+            read nsurname
+
+            echo "Address will be update with : "
+            show_address "${nname:=$oname}" "${nsurname:=$osurname}" "${nphone:=$ophone}" "${nemail:=$oemail}"
+
+            echo -n "confirm ? (y/N) : "
+            read confirm
+            if [ "$confirm" = "y" ] || [ "$confirm" = "Y" ]; then
+                sed -i "s/$matched_address/${nname}:${nsurname}:${nphone}:${nemail}/" ./address_book.txt
+                echo "Edit successfully."
+            else
+                echo "Edit canceled."
+            fi
+        else
+            echo "Edit canceled."
+            break
+        
+        fi
+
+    fi
 }

@@ -24,7 +24,7 @@ do
             remove_address
             ;;
         e)
-            echo edit
+            edit_address
             ;;
         v)
             echo view
