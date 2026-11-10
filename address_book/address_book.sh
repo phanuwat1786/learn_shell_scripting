@@ -8,7 +8,7 @@ do
     echo "a : add new address"
     echo "r : remove address"
     echo "e : edit address"
-    echo "v : view address address at specific index"
+    echo "d : display addresses"
     echo "x : close program"
     echo -n "command: "
     read INPUT
@@ -26,8 +26,8 @@ do
         e)
             edit_address
             ;;
-        v)
-            echo view
+        d)
+            display
             ;;
         x)
             exit

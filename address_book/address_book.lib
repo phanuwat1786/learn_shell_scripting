@@ -271,3 +271,37 @@ edit_address()
 
     fi
 }
+
+display()
+{
+    while :
+    do
+        echo -n "Enter number of addres you want to see (5) : "
+        read address_amount_number
+        if [ "${address_amount_number:=5}" -eq "$address_amount_number" ]
+        then
+            count=1
+            cat ./address_book.txt | while read address_line
+            do
+                echo "address number : ${count}"
+                old_ifs=$IFS
+                IFS=:
+                show_address $address_line
+                IFS=$old_ifs
+
+                if [ "$count" -eq "$address_amount_number" ]; then
+                    break
+                else
+                    echo ""
+                    count=`expr $count + 1`
+                fi
+            done
+
+            [ "$count" -ne "$address_amount_number" ] && echo "all addresses displayed."
+            break
+        else
+            echo "only accept integer."
+        fi
+        
+    done
+}
